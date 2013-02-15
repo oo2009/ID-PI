@@ -76,10 +76,10 @@ def DependencyMatrix(theData, noVariables, noStates):
 # end of coursework 2 task 2
     return MIMatrix
 # Function to compute an ordered list of dependencies 
-def DependencyList(depMatrix):
-    depList=[]
+def DependencyList(dependencyMatrix):
+    dependencyList=[]
 # Coursework 2 task 3 should be inserted here
-    depList2 = reduce(lambda x,y: x+y, [[[dep, A, B] for (B,dep) in enumerate(dep_list)] for (A,dep_list) in enumerate(depMatrix)])
+    depList2 = reduce(lambda x,y: x+y, [[[dep, A, B] for (B,dep) in enumerate(dep_list)] for (A,dep_list) in enumerate(dependencyMatrix)])
     depList2 = sorted(depList2, key=lambda n: n[0], reverse=True)
 # end of coursework 2 task 3
     return array(depList2)
@@ -106,11 +106,10 @@ def generateGraph(spanningTree, noVariables):
     
   return graph
 
-def bfs(x, graph):
+def breadthFirstSearch(x, graph):
   visited = {}
   xSet = []
   q = []
-  
   q.append(x)
   visited[x] = True
   
@@ -124,12 +123,12 @@ def bfs(x, graph):
   
   return set(xSet)
 
-def SpanningTreeAlgorithm(depList, noVariables):
+def SpanningTreeAlgorithm(dependencyList, noVariables):
     spanningTree = []
-    for (x, i, j) in depList:
+    for (x, i, j) in dependencyList:
       g = generateGraph(spanningTree, noVariables)
-      setI = bfs(i, g)
-      setJ = bfs(j, g)
+      setI = breadthFirstSearch(i, g)
+      setJ = breadthFirstSearch(j, g)
       
       if not setJ.intersection(setI):
         spanningTree.append((x, i, j))
