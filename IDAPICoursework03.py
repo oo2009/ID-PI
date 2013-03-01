@@ -356,13 +356,13 @@ pass
 AppendString("IDAPIResults03.txt","Coursework Two by Mohammad Mirza (mum09) and Oyetola Oyeleye (oo2009)" )
 AppendString("IDAPIResults03.txt","")
 AppendString("IDAPIResults03.txt","MDLSize:")
-AppendArray("IDAPIResults03.txt", mdlSize)
+AppendString("IDAPIResults03.txt", mdlSize)
 AppendString("IDAPIResults03.txt","MDLAccuracy:")
-AppendArray("IDAPIResults03.txt", ma)
+AppendString("IDAPIResults03.txt", ma)
 AppendString("IDAPIResults03.txt","MDLScore:")
-AppendArray("IDAPIResults03.txt", net_score)
+AppendString("IDAPIResults03.txt", net_score)
 AppendString("IDAPIResults03.txt","Best MDL Score:")
-AppendArray("IDAPIResults03.txt", best)
+AppendString("IDAPIResults03.txt", best[1])
 
 
 
