@@ -10,12 +10,9 @@ import copy
 # Function to compute the prior distribution of the variable root from the data set
 def Prior(theData, root, noStates):
     prior = zeros((noStates[root]), float )
-# Coursework 1 task 1 should be inserted here
-    contribution = 1.0 / len(theData) ## calculate the probability contribution per occurance
-    for each in theData:
-        prior[each[root]] += contribution
-    # prior = array(map(float, [len([x for x in theData if x[0] == y]) for y in xrange(noStates[root])]))/len(theData)
-# end of Coursework 1 task 1
+    dataSize = len(theData)
+    for i in theData:
+      prior[i[root]] += 1/float(dataSize)
     return prior
 # Function to compute a CPT with parent node varP and xchild node varC from the data array
 # it is assumed that the states are designated by consecutive integers starting with 0
@@ -260,7 +257,7 @@ def MDLAccuracy(theData, arcList, cptList):
     return mdlAccuracy
 
 def MDLScore(theData, arcList, cptList, noStates):
-        return MDLSize(arcList, cptList, len(theData), noStates) - MDLAccuracy(theData, arcList, cptList)
+    return MDLSize(arcList, cptList, len(theData), noStates) - MDLAccuracy(theData, arcList, cptList)
 
 # Coursework 3 task 6 begins here
 def MinimiseScore(theData, arcList, cptList, noStates):
@@ -344,12 +341,11 @@ noVariables, noRoots, noStates, noDataPoints, datain = ReadFile("HepatitisC.txt"
 theData          = array(datain)
 arcs, cpts = HepCBayesianNetwork(theData, noStates)
 mdlSize = MDLSize(arcs, cpts, noDataPoints, noStates)
-dataPoint = [0, 1, 1, 3, 4, 5, 6, 1, 9];
-jointProbability  = JointProbability(dataPoint, arcs, cpts) 
+dataPoint = [0,8,0,1.8,6,0,5,0]
+jProbability  = JointProbability(dataPoint, arcs, cpts) 
 
 CPT_two_parents = CPT_2(theData, 4, 1, 3, noStates)
-CPT_two_parents2 = cpt2(theData, 4, 1, 3, noStates)
-arcs, cpts = HepCBayesianNetwork(theData, noStates)
+CPT_two_parents2 = CPT_2(theData, 4, 1, 3, noStates)
 ma = MDLAccuracy(theData, arcs, cpts)
 net_score = MDLScore(theData, arcs, cpts, noStates)
 best = MinimiseScore(theData, arcs,  cpts, noStates)
@@ -359,14 +355,14 @@ pass
 
 AppendString("IDAPIResults03.txt","Coursework Two by Mohammad Mirza (mum09) and Oyetola Oyeleye (oo2009)" )
 AppendString("IDAPIResults03.txt","")
-AppendString("IDAPIResults02.txt","MDLSize:")
-AppendArray("IDAPIResults02.txt", mdlSize)
+AppendString("IDAPIResults03.txt","MDLSize:")
+AppendArray("IDAPIResults03.txt", mdlSize)
 AppendString("IDAPIResults03.txt","MDLAccuracy:")
-AppendArray("IDAPIResults02.txt", ma)
+AppendArray("IDAPIResults03.txt", ma)
 AppendString("IDAPIResults03.txt","MDLScore:")
-AppendArray("IDAPIResults02.txt", net_score)
+AppendArray("IDAPIResults03.txt", net_score)
 AppendString("IDAPIResults03.txt","Best MDL Score:")
-AppendArray("IDAPIResults02.txt", best)
+AppendArray("IDAPIResults03.txt", best)
 
 
 
