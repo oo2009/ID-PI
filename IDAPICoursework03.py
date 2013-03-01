@@ -344,32 +344,29 @@ noVariables, noRoots, noStates, noDataPoints, datain = ReadFile("HepatitisC.txt"
 theData          = array(datain)
 arcs, cpts = HepCBayesianNetwork(theData, noStates)
 mdlSize = MDLSize(arcs, cpts, noDataPoints, noStates)
-dataPoint = [0, 1, 1, 3, 4, 5, 6, 1, 0];
+dataPoint = [0, 1, 1, 3, 4, 5, 6, 1, 9];
 jointProbability  = JointProbability(dataPoint, arcs, cpts) 
 
 CPT_two_parents = CPT_2(theData, 4, 1, 3, noStates)
 CPT_two_parents2 = cpt2(theData, 4, 1, 3, noStates)
 arcs, cpts = HepCBayesianNetwork(theData, noStates)
 ma = MDLAccuracy(theData, arcs, cpts)
-
 net_score = MDLScore(theData, arcs, cpts, noStates)
 best = MinimiseScore(theData, arcs,  cpts, noStates)
 import pdb; pdb.set_trace()
 pass
-# al2, cl2 = hpn(theData, noStates)
-# dm = DependencyMatrix(theData, noVariables, noStates)
-# dl = DependencyList(dm)
-# st = SpanningTreeAlgorithm(dl, noVariables)
-# al3, cl3 = BayesianNetwork(theData, st, noVariables, noStates, noRoots)
 
-# AppendString("IDAPIResults02.txt","Coursework Two by Mohammad Mirza (mum09) and Oyetola Oyeleye (oo2009)" )
-# AppendString("IDAPIResults02.txt","")
-# AppendString("IDAPIResults02.txt","Dependency Matrix:")
-# AppendArray("IDAPIResults02.txt", dm)
-# AppendString("IDAPIResults02.txt","Dependency List:")
-# AppendArray("IDAPIResults02.txt", dl)
-# AppendString("IDAPIResults02.txt","Spanning Tree")
-# AppendArray("IDAPIResults02.txt", st)
-# generate_dot(st) # will write dot file to disk see docstring for use
+
+AppendString("IDAPIResults03.txt","Coursework Two by Mohammad Mirza (mum09) and Oyetola Oyeleye (oo2009)" )
+AppendString("IDAPIResults03.txt","")
+AppendString("IDAPIResults02.txt","MDLSize:")
+AppendArray("IDAPIResults02.txt", mdlSize)
+AppendString("IDAPIResults03.txt","MDLAccuracy:")
+AppendArray("IDAPIResults02.txt", ma)
+AppendString("IDAPIResults03.txt","MDLScore:")
+AppendArray("IDAPIResults02.txt", net_score)
+AppendString("IDAPIResults03.txt","Best MDL Score:")
+AppendArray("IDAPIResults02.txt", best)
+
 
 
