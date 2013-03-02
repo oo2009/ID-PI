@@ -1,0 +1,10 @@
+Coursework Two by Mohammad Mirza (mum09) and Oyetola Oyeleye (oo2009)
+
+MDLSize:
+3972.430238
+MDLAccuracy:
+-23672.1810271
+MDLScore:
+27644.6112651
+Best MDL Score:
+25916.7016818
