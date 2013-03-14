@@ -1,0 +1,357 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+# Coursework in Python 
+from IDAPICourseworkLibrary import *
+from numpy import *
+import copy
+#
+# Coursework 1 begins here
+#
+# Function to compute the prior distribution of the variable root from the data set
+def Prior(theData, root, noStates):
+    prior = zeros((noStates[root]), float )
+# Coursework 1 task 1 should be inserted here
+    contribution = 1.0 / len(theData) ## calculate the probability contribution per occurance
+    for each in theData:
+        prior[each[root]] += contribution
+    # prior = array(map(float, [len([x for x in theData if x[0] == y]) for y in xrange(noStates[root])]))/len(theData)
+# end of Coursework 1 task 1
+    return prior
+# Function to compute a CPT with parent node varP and xchild node varC from the data array
+# it is assumed that the states are designated by consecutive integers starting with 0
+def CPT(theData, varC, varP, noStates):
+    cPT = zeros((noStates[varC], noStates[varP]), float )
+    cAcc = zeros((noStates[varC]), float )
+    pAcc = zeros((noStates[varP]), float )
+    cAndPAcc = zeros((noStates[varC], noStates[varP]), float )
+    
+    for i in theData:
+        cAndPAcc[i[varC]][i[varP]] += 1
+        pAcc[i[varP]] += 1
+    
+    for i in range(0, len(cPT)):
+        for j in range(0, len(cPT[i])):
+            cPT[i][j] = cAndPAcc[i][j] / pAcc[j]
+        
+    return cPT
+# Function to calculate the joint probability table of two variables in the data set
+def JPT(theData, varRow, varCol, noStates):
+    jPT = zeros((noStates[varRow], noStates[varCol]), float )
+#Coursework 1 task 3 should be inserted here 
+    prob = lambda appearances: [float(len([x for x in appearances if x == y]))/len(theData) \
+                                                    for y in xrange(noStates[varRow])]
+    jPT = array([prob([x[varRow] for x in theData if x[varCol] == y]) for y in xrange(noStates[varCol])]).transpose()
+    
+# end of coursework 1 task 3
+    return jPT
+#
+# Function to convert a joint probability table to a conditional probability table
+def JPT2CPT(aJPT):
+#Coursework 1 task 4 should be inserted here 
+    aCPT = aJPT/sum(aJPT, axis=0)
+# coursework 1 taks 4 ends here
+    return aCPT
+
+#
+# Function to query a naive Bayesian network
+def Query(theQuery, naiveBayes): 
+    rootPdf = zeros((naiveBayes[0].shape[0]), float)
+# Coursework 1 task 5 should be inserted here
+    def mult(x,y): return x*y
+    rootPdf = naiveBayes[0] * reduce(mult, [naiveBayes[x+1][y] for x,y in enumerate(theQuery)])
+    rootPdf = rootPdf / sum(rootPdf)
+# end of coursework 1 task 5
+    return rootPdf
+#
+# End of Coursework 1
+#
+# Coursework 2 begins here
+#
+# Calculate the mutual information from the joint probability table of two variables
+def MutualInformation(jP):
+    mi=0.0
+# Coursework 2 task 1 should be inserted here
+    a_dist = sum(jP, axis=1)
+    b_dist = sum(jP, axis=0)
+    mi = sum([sum([jP[i][j]*nan_to_num(log2(jP[i][j]/(a_dist[i]*b_dist[j]))) \
+            for j,y in enumerate(x) if jP[i][j]]) for i,x in enumerate(jP)])
+# end of coursework 2 task 1
+    return mi
+#
+# construct a dependency matrix for all the variables
+def DependencyMatrix(theData, noVariables, noStates):
+    MIMatrix = zeros((noVariables,noVariables))
+# Coursework 2 task 2 should be inserted here
+    MIMatrix = array([[MutualInformation(JPT(theData, i, j, noStates)) \
+                    for j in xrange(noVariables)] for i in xrange(noVariables)])
+    
+# end of coursework 2 task 2
+    return MIMatrix
+# Function to compute an ordered list of dependencies 
+def DependencyList(depMatrix):
+    """ dependency list returned will not contain repetitions
+        or self-dependencies """
+    depList=[]
+# Coursework 2 task 3 should be inserted here
+    depList2 = reduce(lambda x,y: x+y, [[[dep, A, B] for (B,dep) in enumerate(dep_list) if B<A] for (A,dep_list) in enumerate(depMatrix)])
+    depList2 = sorted(depList2, key=lambda n: n[0], reverse=True)
+# end of coursework 2 task 3
+    return array(depList2)
+#
+# Functions implementing the spanning tree algorithm
+# Coursework 2 task 4
+
+def generateGraph(spanningTree, noVariables):
+    graph = {}
+    for (x, i, j) in spanningTree:
+        if not i in  graph:
+            graph[i] = []
+            graph[i].append(j)
+        else:
+            graph[i].append(j)
+        if not j in graph:
+            graph[j] = []
+            graph[j].append(i)
+        else:
+            graph[j].append(i)
+    for i in xrange(noVariables):
+        if not i in graph:
+            graph[i] = []
+    
+    return graph
+
+def breadthFirstSearch(x, graph):
+    visited = {}
+    xSet = []
+    q = []
+    q.append(x)
+    visited[x] = True
+  
+    while q:
+        y = q.pop()
+        for i in graph[y]:
+            if not i in visited:
+                xSet.append(i)
+                q.append(i)
+                visited[i] = True
+  
+    return set(xSet)
+
+def SpanningTreeAlgorithm(dependencyList, noVariables):
+    spanningTree = []
+    for (x, i, j) in dependencyList:
+        g = generateGraph(spanningTree, noVariables)
+        setI = breadthFirstSearch(i, g)
+        setJ = breadthFirstSearch(j, g)
+      
+        if not setJ.intersection(setI):
+            spanningTree.append((x, i, j))
+    
+    return array(spanningTree)
+    
+def generate_dot(spanningTree):
+    """ generates a dot compatible file """
+    ## on ubuntu use: dot -Tpng CS02_graph.dot -o CSO2_graph.png
+    header = "graph SpanningTree { \n"
+    format = lambda n : "%s -- %s [label=%0.2f]" % (int(n[1]), int(n[2]), float(n[0]))
+    body = "\n".join([format(x) for x in spanningTree])
+    trailer = "}"
+    with open('CS02_graph.dot', 'w') as f:
+        f.write(header + body + trailer)
+
+
+#
+# End of coursework 2
+#
+# Coursework 3 begins here
+#
+# Function to compute a CPT with multiple parents from the data set
+# it is assumed that the states are designated by consecutive integers starting with 0
+def CPT_2(theData, child, parent1, parent2, noStates):
+    cPT = zeros([noStates[child],noStates[parent1],noStates[parent2]], float )
+# Coursework 3 task 1 should be inserted here
+    for i in theData:
+        cPT[i[child]][i[parent1]][i[parent2]] += 1
+    
+    for i in range(0, noStates[parent1]):
+        for j in range(0, noStates[parent2]):
+            sum = 0.0
+            for k in range(0, len(cPT)):
+                sum += cPT[k][i][j]
+            for k in range(0, len(cPT)):
+                if not sum == 0:
+                    cPT[k][i][j] = cPT[k][i][j] / sum
+    #print cPT
+# End of Coursework 3 task 1           
+    return cPT
+
+#
+# Definition of a Bayesian Network
+def ExampleBayesianNetwork(theData, noStates):
+    arcList = [[0],[1],[2,0],[3,2,1],[4,3],[5,3]]
+    cpt0 = Prior(theData, 0, noStates)
+    cpt1 = Prior(theData, 1, noStates)
+    cpt2 = CPT(theData, 2, 0, noStates)
+    cpt3 = CPT_2(theData, 3, 2, 1, noStates)
+    cpt4 = CPT(theData, 4, 3, noStates)
+    cpt5 = CPT(theData, 5, 3, noStates)
+    cptList = [cpt0, cpt1, cpt2, cpt3, cpt4, cpt5]
+    return arcList, cptList
+
+def gen_cptlist(theData, arcList, noStates):
+    cptlist = []    
+    for arc in arcList:
+        if len(arc) == 1:
+            cptlist.append(Prior(theData, arc[0], noStates))
+        elif len(arc) == 2:
+            cptlist.append(CPT(theData, arc[0], arc[1], noStates))
+        else:
+            cptlist.append(CPT_2(theData, arc[0], arc[1], arc[2], noStates))
+    return cptlist
+
+
+# Coursework 3 task 2 begins here
+def HepCBayesianNetwork(theData, noStates):
+    arcList = [[0],[1], [2, 0], [3,4], [4,1], [5,4], [6,1], [7,0,1], [8,7]]
+    cptList = gen_cptlist(theData, arcList, noStates)
+    return arcList, cptList
+# end of coursework 3 task 2
+
+#
+# Function to calculate the MDL size of a Bayesian Network
+def MDLSize(arcList, cptList, noDataPoints, noStates):
+    mdlSize = 0.0
+    for i in range(0, len(noStates)):
+        tempSize = noStates[i]-1
+        for p in arcList[i][1:]:
+            tempSize *= noStates[p]
+            mdlSize += tempSize
+            mdlSize = (mdlSize) * log2(noDataPoints)/2
+# # Coursework 3 task 3 begins here
+# # Coursework 3 task 3 ends here 
+    return mdlSize 
+# #
+# # Function to calculate the joint probability of a single data point in a Network
+def JointProbability(dataPoint, arcList, cptList):
+    jP = 1.0
+# Coursework 3 task 4 begins here
+    for i in range(0, len(dataPoint)):
+        table = cptList[i]
+        arc = arcList[i]
+        val = 1.0
+        if len(arc) == 1:
+            val = table[dataPoint[i]]
+        elif len(arc) == 2:
+            val = table[dataPoint[arc[1]]][dataPoint[i]]
+        elif len(arc) == 3:
+            val = table[dataPoint[i]][dataPoint[arc[1]]][dataPoint[arc[2]]]
+        
+        if val > 0.0:
+            jP *= val
+# Coursework 3 task 4 ends here 
+    return jP
+#
+# Function to calculate the MDLAccuracy from a data set
+def MDLAccuracy(theData, arcList, cptList):
+# Coursework 3 task 5 begins here
+    jp_list = [JointProbability(d, arcList, cptList) for d in theData]
+    mdlAccuracy = sum(map(lambda x: log2(x), jp_list))
+# Coursework 3 task 5 ends here 
+    return mdlAccuracy
+
+def MDLScore(theData, arcList, cptList, noStates):
+        return MDLSize(arcList, cptList, len(theData), noStates) - MDLAccuracy(theData, arcList, cptList)
+
+# Coursework 3 task 6 begins here
+def MinimiseScore(theData, arcList, cptList, noStates):
+    """ this might err for some cases when joint prob is zero """
+    
+    potential_networks = []
+    for n, arc in enumerate(arcList): ## iterate through all arcs
+        for i in xrange(len(arc)-1):
+            tmp_arclist = copy.deepcopy(arcList)
+            tmp_arclist[n].pop(i + 1)
+            tmp_cptlist = gen_cptlist(theData, tmp_arclist, noStates)
+            
+            score = MDLScore(theData, tmp_arclist, tmp_cptlist, noStates)
+            potential_networks.append((tmp_arclist, score))
+    ## select the network with the smallest score
+    best = min(potential_networks, key=lambda n : n[-1])
+    return best
+# Coursework 3 task 6 ends here
+#
+# End of coursework 3
+#
+# Coursework 4 begins here
+#
+def Mean(inputData):
+    realData = inputData.astype(float)
+    noVariables=inputData.shape[1] 
+    mean = [0.0]*noVariables
+    # Coursework 4 task 1 begins here
+    for i in realData:
+        for k in range(0,noVariables):
+            mean[k] += i[k]/len(realData)
+    # Coursework 4 task 1 ends here
+    return array(mean)
+
+
+def Covariance(inputData):
+    realData = inputData.astype(float)
+    noVariables=inputData.shape[1] 
+    covarianceMatrix = zeros((noVariables, noVariables), float)
+    # Coursework 4 task 2 begins here
+    zeroMeanData = realData - Mean(inputData)
+    covarianceMatrix = dot(transpose(zeroMeanData), zeroMeanData)/ (len(realData)-1)
+    # Coursework 4 task 2 ends here
+    return covarianceMatrix
+
+def CreateEigenfaceFiles(theBasis):
+    # Coursework 4 task 3 begins here
+    for i in range(0,len(theBasis)):
+        fileName = "PrincipalComponent" + str(i) + ".jpg"
+        SaveEigenface(theBasis[i], fileName)
+    # Coursework 4 task 3 ends here
+
+def ProjectFace(theBasis, theMean, theFaceImage):
+    magnitudes = []
+    # Coursework 4 task 4 begins here
+    faceImageData = ReadOneImage(theFaceImage)
+    magnitudes = dot((faceImageData - theMean), transpose(theBasis))
+    # Coursework 4 task 4 ends here
+    return array(magnitudes)
+
+def CreatePartialReconstructions(aBasis, aMean, componentMags):
+    # Coursework 4 task 5 begins here
+    SaveEigenface(aMean, "Reconstructed_0" + ".jpg")
+    for i in range(0, len(componentMags)):
+        reconstruction = add(dot(transpose(aBasis[0:i]), componentMags[0:1]), aMean)
+        SaveEigenface(reconstruction, "Reconstructed_"+str(i+1)+".jpg")
+    # Coursework 4 task 5 ends here
+
+def PrincipalComponents(theData):
+    orthoPhi = []
+    # Coursework 4 task 3 begins here
+    # The first part is almost identical to the above Covariance function, but because the
+    # data has so many variables you need to use the Kohonen Lowe method described in lecture 15
+    # The output should be a list of the principal components normalised and sorted in descending 
+    # order of their eignevalues magnitudes
+
+    
+    # Coursework 4 task 6 ends here
+    return array(orthoPhi)
+
+#
+# main program part for Coursework 1
+#
+
+noVariables, noRoots, noStates, noDataPoints, datain = ReadFile("HepatitisC.txt")
+
+
+hepatitisMean = Mean(array(datain))
+hepatitisCovariance = Covariance(array(datain))
+
+
+#AppendString("IDAPIResults04.txt","Coursework Two by Mohammad Mirza (mum09) and Oyetola Oyeleye (oo2009)" )
+#AppendString("IDAPIResults04.txt","")
+
